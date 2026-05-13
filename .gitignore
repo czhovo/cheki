@@ -3,6 +3,19 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+1.txt
+*.ipynb
+*.pt
+sam3_model/
+Untitled*
+
+*.jpg
+*.png
+
+!demo*.jpg
+!demo*.png
+
+
 # C extensions
 *.so
 
