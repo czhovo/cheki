@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from PIL import Image, ImageOps
 from transformers import Sam3Model, Sam3Processor
 from quadrilateral_fitter import QuadrilateralFitter
-
+from config import MASK_THRESHOLD
 
 class PolaroidExtractor:
     def __init__(self, model_dir, device="cuda"):
@@ -22,11 +22,10 @@ class PolaroidExtractor:
         thresholds = [threshold, threshold*0.8, threshold*0.6, threshold*0.4, threshold*0.2]
         for thresh in thresholds:
             results = self.processor.post_process_instance_segmentation(
-                outputs, threshold=thresh, mask_threshold=thresh, target_sizes=[image.size[::-1]]
+                outputs, threshold=thresh, mask_threshold=MASK_THRESHOLD, target_sizes=[image.size[::-1]]
             )[0]
             if len(results["masks"]) > 0:
-                if thresh < threshold:
-                    print(f"以阈值 {thresh}，检测到 {len(results['masks'])} 个目标")
+                print(f"以阈值 {thresh}，检测到 {len(results['masks'])} 个目标")
                 return results["masks"].cpu().numpy()
         return np.array([])
 
@@ -48,7 +47,8 @@ class PolaroidExtractor:
         height = int(width * 1.59)
         dst = np.array([[0, 0], [width, 0], [width, height], [0, height]], dtype=np.float32)
         M = cv2.getPerspectiveTransform(src, dst)
-        return cv2.warpPerspective(image, M, (width, height))
+        rectified = cv2.warpPerspective(image, M, (width, height))
+        return rectified
 
     def extract(self, image_path, prompt, width=800):
         image = Image.open(image_path).convert("RGB")
@@ -132,10 +132,10 @@ class PolaroidExtractor:
 
 
 if __name__ == "__main__":
-    from config import MODEL_DIR, DEVICE, PROMPT, RECTIFIED_WIDTH
+    from config import MODEL_DIR, DEVICE, PAPER_PROMPT, PAPER_WIDTH
     
     extractor = PolaroidExtractor(MODEL_DIR, DEVICE)
     image, masks, all_contours, all_vertices, all_rectified = extractor.extract(
-        "demo1.png", PROMPT, RECTIFIED_WIDTH
+        "demo1.png", PAPER_PROMPT, PAPER_WIDTH
     )
     extractor.visualize(image, masks, all_contours, all_vertices, all_rectified)

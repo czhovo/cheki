@@ -11,9 +11,11 @@ Untitled*
 
 *.jpg
 *.png
-
 !demo*.jpg
 !demo*.png
+
+imgs/
+outs/
 
 
 # C extensions
