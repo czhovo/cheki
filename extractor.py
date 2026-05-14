@@ -14,21 +14,31 @@ class PolaroidExtractor:
         self.model = Sam3Model.from_pretrained(model_dir).to(device)
         self.processor = Sam3Processor.from_pretrained(model_dir)
 
-    def segment(self, image, prompt):
+    def segment(self, image, prompt, threshold=0.5):
         inputs = self.processor(images=image, text=prompt, return_tensors="pt").to(self.device)
         with torch.no_grad():
             outputs = self.model(**inputs)
-        results = self.processor.post_process_instance_segmentation(
-            outputs, threshold=0.5, mask_threshold=0.5, target_sizes=[image.size[::-1]]
-        )[0]
-        return results["masks"][0].cpu().numpy()
+        
+        thresholds = [threshold, threshold*0.8, threshold*0.6, threshold*0.4, threshold*0.2]
+        for thresh in thresholds:
+            results = self.processor.post_process_instance_segmentation(
+                outputs, threshold=thresh, mask_threshold=thresh, target_sizes=[image.size[::-1]]
+            )[0]
+            if len(results["masks"]) > 0:
+                if thresh < threshold:
+                    print(f"以阈值 {thresh}，检测到 {len(results['masks'])} 个目标")
+                return results["masks"].cpu().numpy()
+        return np.array([])
 
     def mask_to_contours(self, mask):
         contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         return contours
 
     def contours_to_vertices(self, contours):
-        points = contours[0].reshape(-1, 2)
+        if not contours:
+            return None
+        cnt = max(contours, key=cv2.contourArea)
+        points = cnt.reshape(-1, 2)
         fitter = QuadrilateralFitter(polygon=points)
         vertices = fitter.fit()
         return np.array(vertices, dtype=np.int32)
@@ -43,49 +53,80 @@ class PolaroidExtractor:
     def extract(self, image_path, prompt, width=800):
         image = Image.open(image_path).convert("RGB")
         image = ImageOps.exif_transpose(image)
-        mask = self.segment(image, prompt)
-        contours = self.mask_to_contours(mask)
-        vertices = self.contours_to_vertices(contours)
-        rectified = self.rectify(np.array(image), vertices, width)
-        return image, mask, contours, vertices, rectified
+        
+        masks = self.segment(image, prompt)
+        
+        if len(masks) == 0:
+            print("未检测到任何目标")
+            return image, [], [], [], []
+        
+        all_contours = []
+        all_vertices = []
+        all_rectified = []
+        
+        for mask in masks:
+            contours = self.mask_to_contours(mask)
+            if not contours:
+                continue
+            vertices = self.contours_to_vertices(contours)
+            if vertices is None:
+                continue
+            rectified = self.rectify(np.array(image), vertices, width)
+            
+            all_contours.append(contours)
+            all_vertices.append(vertices)
+            all_rectified.append(rectified)
+        
+        return image, masks, all_contours, all_vertices, all_rectified
 
-    def visualize(self, image, mask, contours, vertices, rectified):
-        fig, axes = plt.subplots(1, 6, figsize=(22, 6))
-
-        axes[0].imshow(image)
-        axes[0].set_title("Original")
-        axes[0].axis("off")
-
-        axes[1].imshow(mask)
-        axes[1].set_title("Mask")
-        axes[1].axis("off")
-
-        axes[2].imshow(image)
-        axes[2].imshow(mask, cmap="jet", alpha=0.5)
-        axes[2].set_title("Overlay")
-        axes[2].axis("off")
-
-        axes[3].imshow(image)
-        for contour in contours:
-            points = contour.reshape(-1, 2)
-            x = np.append(points[:, 0], points[0, 0])
-            y = np.append(points[:, 1], points[0, 1])
-            axes[3].plot(x, y, "g-", linewidth=2)
-        axes[3].set_title("Contours")
-        axes[3].axis("off")
-
-        axes[4].imshow(image)
-        x = list(vertices[:, 0]) + [vertices[0, 0]]
-        y = list(vertices[:, 1]) + [vertices[0, 1]]
-        axes[4].plot(x, y, "r-", linewidth=2)
-        axes[4].scatter(vertices[:, 0], vertices[:, 1], c="red", s=20)
-        axes[4].set_title("Quadrilateral")
-        axes[4].axis("off")
-
-        axes[5].imshow(rectified)
-        axes[5].set_title("Rectified")
-        axes[5].axis("off")
-
+    def visualize(self, image, masks, all_contours, all_vertices, all_rectified):
+        n_targets = len(all_rectified)
+        
+        if n_targets == 0:
+            print("未检测到目标")
+            return
+        
+        fig, axes = plt.subplots(n_targets, 6, figsize=(16, 4 * n_targets))
+        
+        if n_targets == 1:
+            axes = axes.reshape(1, -1)
+        
+        for i in range(n_targets):
+            axes[i, 0].imshow(image)
+            axes[i, 0].set_title(f"Target {i+1} - Original")
+            axes[i, 0].axis("off")
+            
+            axes[i, 1].imshow(masks[i])
+            axes[i, 1].set_title(f"Target {i+1} - Mask")
+            axes[i, 1].axis("off")
+            
+            axes[i, 2].imshow(image)
+            axes[i, 2].imshow(masks[i], cmap="jet", alpha=0.5)
+            axes[i, 2].set_title(f"Target {i+1} - Overlay")
+            axes[i, 2].axis("off")
+            
+            axes[i, 3].imshow(image)
+            for contour in all_contours[i]:
+                points = contour.reshape(-1, 2)
+                x = np.append(points[:, 0], points[0, 0])
+                y = np.append(points[:, 1], points[0, 1])
+                axes[i, 3].plot(x, y, "g-", linewidth=2)
+            axes[i, 3].set_title(f"Target {i+1} - Contours")
+            axes[i, 3].axis("off")
+            
+            axes[i, 4].imshow(image)
+            vertices = all_vertices[i]
+            x = list(vertices[:, 0]) + [vertices[0, 0]]
+            y = list(vertices[:, 1]) + [vertices[0, 1]]
+            axes[i, 4].plot(x, y, "r-", linewidth=2)
+            axes[i, 4].scatter(vertices[:, 0], vertices[:, 1], c="red", s=20)
+            axes[i, 4].set_title(f"Target {i+1} - Quadrilateral")
+            axes[i, 4].axis("off")
+            
+            axes[i, 5].imshow(all_rectified[i])
+            axes[i, 5].set_title(f"Target {i+1} - Rectified")
+            axes[i, 5].axis("off")
+        
         plt.tight_layout()
         plt.show()
 
@@ -94,7 +135,7 @@ if __name__ == "__main__":
     from config import MODEL_DIR, DEVICE, PROMPT, RECTIFIED_WIDTH
     
     extractor = PolaroidExtractor(MODEL_DIR, DEVICE)
-    image, mask, contours, vertices, rectified = extractor.extract(
-        "demo1.jpg", PROMPT, RECTIFIED_WIDTH
+    image, masks, all_contours, all_vertices, all_rectified = extractor.extract(
+        "demo2.jpg", PROMPT, RECTIFIED_WIDTH
     )
-    extractor.visualize(image, mask, contours, vertices, rectified)
+    extractor.visualize(image, masks, all_contours, all_vertices, all_rectified)
