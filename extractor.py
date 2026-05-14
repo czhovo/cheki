@@ -136,6 +136,6 @@ if __name__ == "__main__":
     
     extractor = PolaroidExtractor(MODEL_DIR, DEVICE)
     image, masks, all_contours, all_vertices, all_rectified = extractor.extract(
-        "demo2.jpg", PROMPT, RECTIFIED_WIDTH
+        "demo1.png", PROMPT, RECTIFIED_WIDTH
     )
     extractor.visualize(image, masks, all_contours, all_vertices, all_rectified)
