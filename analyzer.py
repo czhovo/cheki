@@ -51,9 +51,9 @@ class PolaroidAnalyzer:
         cv2.fillPoly(mask, [np.array([[vertices[0][0]-margin, vertices[0][1]-margin], [vertices[1][0]+margin, vertices[1][1]-margin], [vertices[2][0]+margin, vertices[2][1]+margin], [vertices[3][0]-margin, vertices[3][1]+margin]])], 0)
         return mask.astype(bool)
     
-    def find_white_regions(self, image, border_mask, block_size=32, num_blocks=10):
-        is_bright = np.all(image > 200, axis=2)
-        is_neutral = np.std(image.astype(np.float32), axis=2) < 15
+    def find_white_regions(self, image, border_mask, block_size=32, num_blocks=10, brightness_threshold=200, variance_threshold=15):
+        is_bright = np.all(image > brightness_threshold, axis=2)
+        is_neutral = np.std(image.astype(np.float32), axis=2) < variance_threshold
         is_white = is_bright & is_neutral & border_mask
         
         blocks = []
@@ -192,12 +192,12 @@ class PolaroidAnalyzer:
         plt.show()
 
 if __name__ == "__main__":
-    from config import MODEL_DIR, DEVICE, IMAGE_AREA_PROMPT, IMAGE_WIDTH, WHITE_BLOCK_SIZE, WHITE_BLOCK_NUM
+    from config import MODEL_DIR, DEVICE, IMAGE_AREA_PROMPT, IMAGE_WIDTH, WHITE_BLOCK_SIZE, WHITE_BLOCK_NUM, BRIGHTNESS_THRESHOLD, VARIANCE_THRESHOLD
 
 
     analyzer = PolaroidAnalyzer(MODEL_DIR, DEVICE)
     image, masks, contours, vertices, wb_mask, wb_image, rectified, quality = analyzer.extract_image_area(
-        "IMG_7065_004.png", IMAGE_AREA_PROMPT, IMAGE_WIDTH, WHITE_BLOCK_SIZE, WHITE_BLOCK_NUM
+        "outs/IMG_7131_002.png", IMAGE_AREA_PROMPT, IMAGE_WIDTH, WHITE_BLOCK_SIZE, WHITE_BLOCK_NUM
     )
     analyzer.visualize(image, vertices, wb_mask, wb_image, rectified)
     print(f"quality: {quality}")
