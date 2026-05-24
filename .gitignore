@@ -17,6 +17,7 @@ Untitled*
 imgs/
 outs/
 
+*.npz
 
 # C extensions
 *.so
