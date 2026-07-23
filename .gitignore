@@ -166,6 +166,11 @@ activemq-data/
 # Environments
 .conda/
 .env
+.env.*
+.api_keys.json
+.aliyun_balance_credentials.json
+cheki_date_annotation_qwen_bundle/
+cheki_date_annotation_qwen.zip
 .envrc
 .venv
 env/
