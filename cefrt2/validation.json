@@ -1,0 +1,99 @@
+{
+  "synthetic_only": true,
+  "dataset_images_read": 0,
+  "copied_sources_verified": true,
+  "original_checkpoint_sha256_verified": true,
+  "checkpoint_model_load_strict": true,
+  "additional_pretrained_weights_required": false,
+  "device": "cpu",
+  "fixtures": [
+    {
+      "name": "CEFRT2Detector_0",
+      "max_abs_tolerance": 0.0005,
+      "outputs": [
+        {
+          "output": "logits",
+          "max_abs_error": 3.2901763916015625e-05
+        },
+        {
+          "output": "boxes_cxcywh",
+          "max_abs_error": 5.736947059631348e-06
+        }
+      ]
+    },
+    {
+      "name": "CEFRT2Detector_1",
+      "max_abs_tolerance": 0.0005,
+      "outputs": [
+        {
+          "output": "logits",
+          "max_abs_error": 6.198883056640625e-06
+        },
+        {
+          "output": "boxes_cxcywh",
+          "max_abs_error": 1.996755599975586e-06
+        }
+      ]
+    },
+    {
+      "name": "CEFRT2EdgeSAMEncoder_0",
+      "max_abs_tolerance": 0.0005,
+      "outputs": [
+        {
+          "output": "image_embeddings",
+          "max_abs_error": 0.0
+        }
+      ]
+    },
+    {
+      "name": "CEFRT2EdgeSAMEncoder_1",
+      "max_abs_tolerance": 0.0005,
+      "outputs": [
+        {
+          "output": "image_embeddings",
+          "max_abs_error": 0.0
+        }
+      ]
+    },
+    {
+      "name": "CEFRT2EdgeSAMBoxDecoder_0",
+      "max_abs_tolerance": 0.0005,
+      "outputs": [
+        {
+          "output": "mask_logits",
+          "max_abs_error": 6.67572021484375e-06
+        },
+        {
+          "output": "iou_prediction",
+          "max_abs_error": 0.0
+        }
+      ]
+    },
+    {
+      "name": "CEFRT2EdgeSAMBoxDecoder_1",
+      "max_abs_tolerance": 0.0005,
+      "outputs": [
+        {
+          "output": "mask_logits",
+          "max_abs_error": 6.67572021484375e-06
+        },
+        {
+          "output": "iou_prediction",
+          "max_abs_error": 0.0
+        }
+      ]
+    }
+  ],
+  "parameters": {
+    "rtdetr": 20083028,
+    "rtdetr_backbone": 11199968,
+    "rtdetr_hybrid_encoder": 4965120,
+    "rtdetr_decoder": 3917940,
+    "edgesam": 9582112,
+    "edgesam_image_encoder": 5517552,
+    "edgesam_prompt_encoder": 6220,
+    "edgesam_mask_decoder": 4058340
+  },
+  "passed": true,
+  "not_a_new_dataset_evaluation": true
+}

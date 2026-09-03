@@ -1,0 +1,8 @@
+checkpoints/
+*.pt
+*.pth
+*.pyc
+__pycache__/
+*.download
+predictions*.jsonl
+.venv/

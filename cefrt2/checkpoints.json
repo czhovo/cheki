@@ -1,0 +1,23 @@
+{
+  "algorithm": "ChekiEdgeFit-RT v2",
+  "release": "cefrt2-v2.0.0",
+  "precision": "FP32",
+  "threshold": 0.9267578125,
+  "assets": [
+    {
+      "role": "detector",
+      "name": "cefrt2-rtdetr-r18-epoch24-fp32.pt",
+      "bytes": 241768649,
+      "sha256": "65c90302a1064742b0befb67478ab58088b4973272380f9d4fbd43099b2df9c0",
+      "url": "https://github.com/czhovo/cheki/releases/download/cefrt2-v2.0.0/cefrt2-rtdetr-r18-epoch24-fp32.pt"
+    },
+    {
+      "role": "segmenter",
+      "name": "cefrt2-edgesam3x-epoch10-fp32.pt",
+      "bytes": 114897012,
+      "sha256": "841c35089c4b49cf4beb2b3cd09df62af60c09378a490c66bcda05bb11f4d221",
+      "url": "https://github.com/czhovo/cheki/releases/download/cefrt2-v2.0.0/cefrt2-edgesam3x-epoch10-fp32.pt"
+    }
+  ],
+  "original_checkpoint_bytes_preserved": true
+}

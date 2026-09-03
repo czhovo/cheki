@@ -1,0 +1,15 @@
+# Install a matching PyTorch/torchvision CPU or CUDA build for your platform first.
+torch>=2.1
+torchvision>=0.16
+numpy>=1.24
+scipy>=1.10
+opencv-python-headless>=4.10
+Pillow>=10.4
+PyYAML>=6
+timm>=0.9
+yacs>=0.1.8
+loralib>=0.1.2
+faster-coco-eval>=1.6.6
+pycocotools>=2.0
+tensorboard>=2.14
+packaging>=23
